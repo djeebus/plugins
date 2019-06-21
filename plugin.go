@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"plugin"
 
-	"github.com/missionMeteora/journaler"
+	"github.com/hatchify/output"
 )
 
 func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
@@ -39,14 +39,14 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		return
 	}
 
-	p.out = journaler.New("Plugin", p.alias)
+	p.out = output.NewWrapper(p.alias)
 	pp = &p
 	return
 }
 
 // Plugin represents a plugin entry
 type Plugin struct {
-	out *journaler.Journaler
+	out *output.Wrapper
 	p   *plugin.Plugin
 
 	// Original import key
