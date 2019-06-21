@@ -78,13 +78,10 @@ func (p *Plugins) Retrieve() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	errs := make(chan error, len(p.ps))
 	for _, pi := range p.ps {
-		go wrapProcess(pi.retrieve, errs)
-	}
-
-	if err = waitForProcesses(errs, len(p.ps)); err != nil {
-		return
+		if err = pi.retrieve(); err != nil {
+			return
+		}
 	}
 
 	return
