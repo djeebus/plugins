@@ -21,7 +21,6 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		}
 
 		p.filename = key
-		return
 
 	case isGitReference(key):
 		p.gitURL = key
