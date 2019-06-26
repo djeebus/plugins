@@ -6,8 +6,9 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/hatchify/output"
+
 	"github.com/Hatch1fy/errors"
-	"github.com/missionMeteora/journaler"
 )
 
 const (
@@ -31,7 +32,7 @@ func New(dir string) (pp *Plugins, err error) {
 	}
 
 	var p Plugins
-	p.out = journaler.New("Plugins")
+	p.out = output.NewWrapper("Plugins")
 	p.dir = dir
 	p.ps = make(pluginslice, 0, 4)
 	pp = &p
@@ -41,7 +42,7 @@ func New(dir string) (pp *Plugins, err error) {
 // Plugins manages loaded plugins
 type Plugins struct {
 	mu  sync.RWMutex
-	out *journaler.Journaler
+	out output.Outputter
 
 	// Root directory
 	dir string
