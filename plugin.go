@@ -23,12 +23,17 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		p.filename = key
 
 	case isGitReference(key):
-		p.gitURL = key
-		if len(p.alias) == 0 {
-			if p.alias, err = getGitPluginKey(key); err != nil {
-				return
-			}
+		var repoName string
+		if _, repoName, p.branch, err = getGitURLParts(key); err != nil {
+			return
 		}
+
+		if len(p.alias) == 0 {
+			p.alias = repoName
+		}
+
+		// Set gitURL
+		p.gitURL = removeBranchHash(key)
 
 		// Set filename
 		p.filename = filepath.Join(dir, p.alias+".so")
@@ -56,6 +61,8 @@ type Plugin struct {
 	gitURL string
 	// The filename of the plugin's .so file
 	filename string
+	// The target branch of the plugin
+	branch string
 
 	// Signals if the plugin was loaded with an active update state
 	update bool
@@ -94,6 +101,34 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Success("Download complete")
+	return
+}
+
+func (p *Plugin) checkout() (err error) {
+	if len(p.gitURL) == 0 || len(p.branch) == 0 {
+		return
+	}
+
+	var status string
+	if status, err = gitCheckout(p.gitURL, p.branch); len(status) == 0 || err != nil {
+		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
+		return
+	}
+
+	p.out.Success("Switched to \"%s\" branch", p.branch)
+	// Ensure we're up to date with the given branch
+	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
+		return
+	}
+
+	p.out.Success("%s", status)
+
+	// Ensure we have all the current dependencies
+	if err = goGet(p.gitURL, true); err != nil {
+		return
+	}
+
+	p.out.Success("Dependencies downloaded")
 	return
 }
 

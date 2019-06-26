@@ -83,6 +83,10 @@ func (p *Plugins) Retrieve() (err error) {
 		if err = pi.retrieve(); err != nil {
 			return
 		}
+
+		if err = pi.checkout(); err != nil {
+			return
+		}
 	}
 
 	return
