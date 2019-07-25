@@ -42,17 +42,21 @@ func gitCheckout(gitURL, branch string) (resp string, err error) {
 		return
 	}
 
-	if strings.Index(errBuf.String(), "Already on") > -1 {
+	errStr := errBuf.String()
+	switch {
+	case errStr == "":
 		return
-	}
+	case strings.Index(errStr, "Already on") > -1:
+		return
 
-	if strings.Index(errBuf.String(), "Switched to branch") > -1 {
+	case strings.Index(errStr, "Switched to") > -1:
 		resp = errBuf.String()
 		return
-	}
 
-	err = errors.Error(errBuf.String())
-	return
+	default:
+		err = errors.Error(errBuf.String())
+		return
+	}
 }
 
 func gitPull(gitURL string) (resp string, err error) {
