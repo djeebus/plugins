@@ -110,8 +110,10 @@ func (p *Plugin) checkout() (err error) {
 	}
 
 	var status string
-	if status, err = gitCheckout(p.gitURL, p.branch); len(status) == 0 || err != nil {
+	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
+		return
+	} else if len(status) == 0 {
 		return
 	}
 
