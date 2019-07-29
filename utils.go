@@ -26,6 +26,39 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
+func gitCheckout(gitURL, branch string) (resp string, err error) {
+	gitcheckout := exec.Command("git", "checkout", branch)
+	gitcheckout.Dir = getGitDir(gitURL)
+	gitcheckout.Stdin = os.Stdin
+
+	outBuf := bytes.NewBuffer(nil)
+	gitcheckout.Stdout = outBuf
+
+	errBuf := bytes.NewBuffer(nil)
+	gitcheckout.Stderr = errBuf
+
+	if err = gitcheckout.Run(); err == nil && errBuf.Len() == 0 {
+		resp = outBuf.String()
+		return
+	}
+
+	errStr := errBuf.String()
+	switch {
+	case errStr == "":
+		return
+	case strings.Index(errStr, "Already on") > -1:
+		return
+
+	case strings.Index(errStr, "Switched to") > -1:
+		resp = errBuf.String()
+		return
+
+	default:
+		err = errors.Error(errBuf.String())
+		return
+	}
+}
+
 func gitPull(gitURL string) (resp string, err error) {
 	gitpull := exec.Command("git", "pull", "origin")
 	gitpull.Dir = getGitDir(gitURL)
@@ -46,7 +79,7 @@ func gitPull(gitURL string) (resp string, err error) {
 	}
 
 	outStr := outBuf.String()
-	if strings.Index(outStr, "Already up to date.") == 0 {
+	if strings.Index(outStr, "up to date") > -1 {
 		return
 	}
 
@@ -145,12 +178,12 @@ func doesPluginExist(filename string) (exists bool) {
 	return !info.IsDir()
 }
 
-func getGitPluginKey(gitURL string) (key string, err error) {
-	_, key, err = getGitURLParts(gitURL)
+func getGitPluginKey(gitURL string) (key, branch string, err error) {
+	_, key, branch, err = getGitURLParts(gitURL)
 	return
 }
 
-func getGitURLParts(gitURL string) (gitUser, repoName string, err error) {
+func getGitURLParts(gitURL string) (gitUser, repoName, branch string, err error) {
 	var u *url.URL
 	if u, err = url.Parse("http://" + gitURL); err != nil {
 		return
@@ -159,6 +192,7 @@ func getGitURLParts(gitURL string) (gitUser, repoName string, err error) {
 	parts := stripEmpty(strings.Split(u.Path, "/"))
 	gitUser = parts[0]
 	repoName = parts[1]
+	branch = u.Fragment
 	return
 }
 
@@ -260,4 +294,10 @@ func isDoesNotExistError(err error) (ok bool) {
 
 	str := strings.ToLower(err.Error())
 	return strings.Index(str, "no such file or directory") > -1
+}
+
+func removeBranchHash(gitURL string) (out string) {
+	spl := strings.Split(gitURL, "#")
+	out = spl[0]
+	return
 }
