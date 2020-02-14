@@ -166,7 +166,14 @@ func (p *Plugins) Backend(key string, backend interface{}) (err error) {
 
 	beVal := reflect.ValueOf(fn())
 
-	if elem.Type() != beVal.Type() {
+	switch {
+	// Check to see if the types match exactly
+	case elem.Type() == beVal.Type():
+	// Check to see if the backend type implements the provided interface
+	case beVal.Type().Implements(elem.Type()):
+
+	default:
+		// The provided value isn't an exact match, nor does it match the provided interface
 		return fmt.Errorf("invalid type, expected %v and received %v", elem.Type(), beVal.Type())
 	}
 
