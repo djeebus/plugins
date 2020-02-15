@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"plugin"
 
-	"github.com/hatchify/output"
+	"github.com/hatchify/scribe"
 )
 
 func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
@@ -43,14 +43,14 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		return
 	}
 
-	p.out = output.NewWrapper(p.alias)
+	p.out = scribe.New(p.alias)
 	pp = &p
 	return
 }
 
 // Plugin represents a plugin entry
 type Plugin struct {
-	out *output.Wrapper
+	out *scribe.Scribe
 	p   *plugin.Plugin
 
 	// Original import key
@@ -88,7 +88,7 @@ func (p *Plugin) retrieve() (err error) {
 			return
 		}
 
-		p.out.Success("%s", status)
+		p.out.Successf("%s", status)
 
 	case isDoesNotExistError(err):
 
@@ -117,13 +117,13 @@ func (p *Plugin) checkout() (err error) {
 		return
 	}
 
-	p.out.Success("Switched to \"%s\" branch", p.branch)
+	p.out.Successf("Switched to \"%s\" branch", p.branch)
 	// Ensure we're up to date with the given branch
 	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
 		return
 	}
 
-	p.out.Success("%s", status)
+	p.out.Successf("%s", status)
 
 	// Ensure we have all the current dependencies
 	if err = goGet(p.gitURL, true); err != nil {

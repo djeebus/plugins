@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/hatchify/output"
+	"github.com/hatchify/scribe"
 
 	"github.com/Hatch1fy/errors"
 )
@@ -32,7 +32,7 @@ func New(dir string) (pp *Plugins, err error) {
 	}
 
 	var p Plugins
-	p.out = output.NewWrapper("Plugins")
+	p.out = scribe.New("Plugins")
 	p.dir = dir
 	p.ps = make(pluginslice, 0, 4)
 	pp = &p
@@ -42,7 +42,7 @@ func New(dir string) (pp *Plugins, err error) {
 // Plugins manages loaded plugins
 type Plugins struct {
 	mu  sync.RWMutex
-	out output.Outputter
+	out *scribe.Scribe
 
 	// Root directory
 	dir string
@@ -116,7 +116,7 @@ func (p *Plugins) Initialize() (err error) {
 			return
 		}
 
-		p.out.Success("Initialized %s (%s)", pi.alias, pi.filename)
+		p.out.Successf("Initialized %s (%s)", pi.alias, pi.filename)
 	}
 
 	return
@@ -166,7 +166,14 @@ func (p *Plugins) Backend(key string, backend interface{}) (err error) {
 
 	beVal := reflect.ValueOf(fn())
 
-	if elem.Type() != beVal.Type() {
+	switch {
+	// Check to see if the types match exactly
+	case elem.Type() == beVal.Type():
+	// Check to see if the backend type implements the provided interface
+	case beVal.Type().Implements(elem.Type()):
+
+	default:
+		// The provided value isn't an exact match, nor does it match the provided interface
 		return fmt.Errorf("invalid type, expected %v and received %v", elem.Type(), beVal.Type())
 	}
 
@@ -190,7 +197,7 @@ func (p *Plugins) Close() (err error) {
 			continue
 		}
 
-		p.out.Success("Closed %s", pi.alias)
+		p.out.Successf("Closed %s", pi.alias)
 	}
 
 	p.closed = true
