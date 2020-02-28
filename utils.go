@@ -88,7 +88,7 @@ func gitPull(gitURL string) (resp string, err error) {
 }
 
 func goGet(gitURL string, update bool) (err error) {
-	args := []string{"get", "-u", "-v", "-buildmode", "plugin", gitURL}
+	args := []string{"get", "-v", "-buildmode", "plugin", gitURL}
 	if !update {
 		args = append(args[:1], args[2:]...)
 	}
