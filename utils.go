@@ -109,7 +109,7 @@ func goGet(gitURL string, update bool) (err error) {
 
 func goBuild(gitURL, filename string) (err error) {
 	goDir := getGoDir(gitURL)
-	gobuild := exec.Command("go", "build", "-trimpath", "$GOHOME", "--buildmode", "plugin", "-o", filename, goDir)
+	gobuild := exec.Command("go", "build", "-trimpath", "--buildmode", "plugin", "-o", filename, goDir)
 	gobuild.Stdin = os.Stdin
 	gobuild.Stdout = os.Stdout
 	gobuild.Stderr = os.Stderr
