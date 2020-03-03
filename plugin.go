@@ -78,24 +78,6 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
-	var status string
-	status, err = gitPull(p.gitURL)
-
-	switch {
-	case err == nil:
-		if len(status) == 0 {
-			p.out.Notification("Already up-to-date")
-			return
-		}
-
-		p.out.Successf("%s", status)
-
-	case isDoesNotExistError(err):
-
-	default:
-		return
-	}
-
 	if err = goGet(p.gitURL, false); err != nil {
 		return
 	}
@@ -105,6 +87,7 @@ func (p *Plugin) retrieve() (err error) {
 }
 
 func (p *Plugin) checkout() (err error) {
+	p.out.Notification("Checking out " + p.branch)
 	if len(p.gitURL) == 0 || len(p.branch) == 0 {
 		return
 	}
@@ -139,6 +122,9 @@ func (p *Plugin) build() (err error) {
 		return
 	}
 
+	if err = p.checkout(); err != nil {
+		return
+	}
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
 	}

@@ -88,7 +88,7 @@ func gitPull(gitURL string) (resp string, err error) {
 }
 
 func goGet(gitURL string, update bool) (err error) {
-	args := []string{"get", "-v", "-buildmode", "plugin", gitURL}
+	args := []string{"get", "-v", "-buildmode=plugin", gitURL}
 	if !update {
 		args = append(args[:1], args[2:]...)
 	}
@@ -108,15 +108,20 @@ func goGet(gitURL string, update bool) (err error) {
 }
 
 func goBuild(gitURL, filename string) (err error) {
-	goDir := getGoDir(gitURL)
-	gobuild := exec.Command("go", "build", "-trimpath", "--buildmode", "plugin", "-o", filename, goDir)
+	curDir, _ := os.Getwd()
+	target := path.Join(curDir, filename)
+
+	// Build in local directory with target filepath instead of target directory with build path.
+	gobuild := exec.Command("go", "build", "-trimpath", "-buildmode=plugin", "-o", target)
+	// Workaround for https://github.com/golang/go/issues/27751
+	gobuild.Dir = getGoDir(gitURL)
+
 	gobuild.Stdin = os.Stdin
 	gobuild.Stdout = os.Stdout
 	gobuild.Stderr = os.Stderr
 
 	errBuf := bytes.NewBuffer(nil)
 	gobuild.Stderr = errBuf
-
 	if err = gobuild.Run(); err != nil {
 		return errors.Error(errBuf.String())
 	}
