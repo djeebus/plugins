@@ -87,11 +87,11 @@ func (p *Plugin) retrieve() (err error) {
 }
 
 func (p *Plugin) checkout() (err error) {
-	p.out.Notification("Checking out " + p.branch)
 	if len(p.gitURL) == 0 || len(p.branch) == 0 {
 		return
 	}
 
+	p.out.Notification("Checking out " + p.branch)
 	var status string
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
@@ -122,9 +122,6 @@ func (p *Plugin) build() (err error) {
 		return
 	}
 
-	if err = p.checkout(); err != nil {
-		return
-	}
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
 	}
