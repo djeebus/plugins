@@ -78,24 +78,6 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
-	var status string
-	status, err = gitPull(p.gitURL)
-
-	switch {
-	case err == nil:
-		if len(status) == 0 {
-			p.out.Notification("Already up-to-date")
-			return
-		}
-
-		p.out.Successf("%s", status)
-
-	case isDoesNotExistError(err):
-
-	default:
-		return
-	}
-
 	if err = goGet(p.gitURL, false); err != nil {
 		return
 	}
@@ -109,6 +91,7 @@ func (p *Plugin) checkout() (err error) {
 		return
 	}
 
+	p.out.Notification("Checking out " + p.branch)
 	var status string
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
