@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/hatchify/queue"
 	"github.com/hatchify/scribe"
 
 	"github.com/Hatch1fy/errors"
@@ -104,6 +105,27 @@ func (p *Plugins) Build() (err error) {
 	}
 
 	return
+}
+
+// BuildAsync will build all of the plugins asynchronously
+func (p *Plugins) BuildAsync(q *queue.Queue) (err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	var wg sync.WaitGroup
+	wg.Add(len(p.ps))
+
+	var errs errors.ErrorList
+	for _, pi := range p.ps {
+		q.New(func() {
+			defer wg.Done()
+			errs.Push(pi.build())
+		})
+	}
+
+	wg.Wait()
+
+	return errs.Err()
 }
 
 // Initialize will initialize all loaded plugins

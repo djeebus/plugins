@@ -4,5 +4,7 @@ github.com/Hatch1fy/errors v0.1.0 h1:O0eV+wlv/uF++/IQFxPaTVQOCHxzEXFFX0cMrIs8GSs
 github.com/Hatch1fy/errors v0.1.0/go.mod h1:ghvTU0wQ49AH7DcAfdKmWjBDjgEOoc1ltdPhDlGPz7w=
 github.com/hatchify/colors v0.1.0 h1:EOU0mKjn7ScTR7vjWq/lknv1XQQoLlkm0Nk0XTLqoVA=
 github.com/hatchify/colors v0.1.0/go.mod h1:t0952Ef1zDFMVTCkOwhrdJS9ToVWTdcJ3PWCHZADLuU=
+github.com/hatchify/queue v0.1.0 h1:seZZpT3ZvPSbvvrWxS62747vXtkt+fXAohBEE+aKYhk=
+github.com/hatchify/queue v0.1.0/go.mod h1:b976dT/lR/zCD+aXGI4a9t1LJZlW8ukI6BPxxih0ehY=
 github.com/hatchify/scribe v0.1.2 h1:Y5sLp5uYsavKoo5h8BaOX4we9mYpi0acgYPRt81ziNk=
 github.com/hatchify/scribe v0.1.2/go.mod h1:5edr7Z5qp41ahKKgImyXBy1gn+evaSs5SuwQfY1r+eQ=
