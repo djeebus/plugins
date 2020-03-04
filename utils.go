@@ -88,12 +88,8 @@ func gitPull(gitURL string) (resp string, err error) {
 }
 
 func goGet(gitURL string, update bool) (err error) {
-	args := []string{"get", "-v", "-u", "-buildmode=plugin", gitURL}
-	if !update {
-		args = append(args[:1], args[2:]...)
-	}
+	args := []string{"get", "-v", "-buildmode=plugin", gitURL}
 
-	println("args: " + args[2])
 	goget := exec.Command("go", args...)
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout
