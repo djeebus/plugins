@@ -1,8 +1,8 @@
 module github.com/vroomy/plugins
 
-go 1.13
+go 1.14
 
 require (
-	github.com/Hatch1fy/errors v0.1.0
-	github.com/hatchify/scribe v0.1.2
+	github.com/Hatch1fy/errors v0.2.0
+	github.com/hatchify/scribe v0.2.0
 )
