@@ -78,6 +78,10 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
+	if _, err = gitPull(p.gitURL); err != nil {
+		return
+	}
+
 	if err = goGet(p.gitURL, false); err != nil {
 		return
 	}
