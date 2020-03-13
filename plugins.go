@@ -117,10 +117,12 @@ func (p *Plugins) BuildAsync(q *queue.Queue) (err error) {
 
 	var errs errors.ErrorList
 	for _, pi := range p.ps {
-		q.New(func() {
-			defer wg.Done()
-			errs.Push(pi.build())
-		})
+		q.New(func(pi *Plugin) func() {
+			return func() {
+				defer wg.Done()
+				errs.Push(pi.build())
+			}
+		}(pi))
 	}
 
 	wg.Wait()
