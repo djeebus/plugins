@@ -60,6 +60,13 @@ func gitCheckout(gitURL, branch string) (resp string, err error) {
 }
 
 func gitPull(gitURL string) (resp string, err error) {
+	if !doesPluginSourceExist(gitURL) {
+		// We cannot pull if the source doesn't already exist. Additionally, "git pull" isn't
+		// needed if the source doesn't exist yet. When we "go get", we will get the most up
+		// to date source
+		return
+	}
+
 	gitpull := exec.Command("git", "pull", "origin")
 	gitpull.Dir = getGitDir(gitURL)
 	gitpull.Stdin = os.Stdin
@@ -302,4 +309,22 @@ func removeBranchHash(gitURL string) (out string) {
 	spl := strings.Split(gitURL, "#")
 	out = spl[0]
 	return
+}
+
+func doesPluginSourceExist(gitURL string) (exists bool) {
+	dir := path.Join(getGoPath(), "src", gitURL)
+	info, err := os.Stat(dir)
+	if err != nil {
+		return
+	}
+
+	return info.IsDir()
+}
+
+func getGoPath() (gopath string) {
+	if gopath = os.Getenv("GOPATH"); len(gopath) > 0 {
+		return
+	}
+
+	return "~/go/"
 }
