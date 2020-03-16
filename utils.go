@@ -60,13 +60,6 @@ func gitCheckout(gitURL, branch string) (resp string, err error) {
 }
 
 func gitPull(gitURL string) (resp string, err error) {
-	if !doesPluginSourceExist(gitURL) {
-		// We cannot pull if the source doesn't already exist. Additionally, "git pull" isn't
-		// needed if the source doesn't exist yet. When we "go get", we will get the most up
-		// to date source
-		return
-	}
-
 	gitpull := exec.Command("git", "pull", "origin")
 	gitpull.Dir = getGitDir(gitURL)
 	gitpull.Stdin = os.Stdin
@@ -94,9 +87,25 @@ func gitPull(gitURL string) (resp string, err error) {
 	return
 }
 
-func goGet(gitURL string, update bool) (err error) {
-	args := []string{"get", "-v", "-buildmode=plugin", gitURL}
+func updatePluginChildren(gitURL string) (err error) {
+	args := []string{"get", "-v", "-buildmode=plugin"}
+	update := exec.Command("go", args...)
+	update.Stdin = os.Stdin
+	update.Stdout = os.Stdout
+	update.Dir = getGoDir(gitURL)
 
+	errBuf := bytes.NewBuffer(nil)
+	update.Stderr = errBuf
+
+	if err = update.Run(); err != nil {
+		return errors.Error(errBuf.String())
+	}
+
+	return
+}
+
+func goGet(gitURL string) (err error) {
+	args := []string{"get", "-v", "-buildmode=plugin", gitURL}
 	goget := exec.Command("go", args...)
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout

@@ -78,11 +78,18 @@ func (p *Plugin) retrieve() (err error) {
 	}
 
 	p.out.Notification("About to retrieve")
+	if !doesPluginSourceExist(p.gitURL) {
+		// We don't have the source yet. Download it
+		return goGet(p.gitURL)
+	}
+
+	// We have the source already. Perform git pull to make sure the branch is synced
 	if _, err = gitPull(p.gitURL); err != nil {
 		return
 	}
 
-	if err = goGet(p.gitURL, false); err != nil {
+	// Update all the plugin children
+	if err = updatePluginChildren(p.gitURL); err != nil {
 		return
 	}
 
@@ -113,7 +120,7 @@ func (p *Plugin) checkout() (err error) {
 	p.out.Successf("%s", status)
 
 	// Ensure we have all the current dependencies
-	if err = goGet(p.gitURL, true); err != nil {
+	if err = updatePluginChildren(p.gitURL); err != nil {
 		return
 	}
 
