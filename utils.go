@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"bytes"
+	"go/build"
 	"net/url"
 	"os"
 	"os/exec"
@@ -321,7 +322,8 @@ func removeBranchHash(gitURL string) (out string) {
 }
 
 func doesPluginSourceExist(gitURL string) (exists bool) {
-	dir := path.Join(getGoPath(), "src", gitURL)
+	gopath := path.Clean(getGoPath())
+	dir := path.Join(gopath, "src", gitURL)
 	info, err := os.Stat(dir)
 	if err != nil {
 		return
@@ -335,5 +337,5 @@ func getGoPath() (gopath string) {
 		return
 	}
 
-	return "~/go/"
+	return build.Default.GOPATH
 }
