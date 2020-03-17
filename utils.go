@@ -88,7 +88,7 @@ func gitPull(gitURL string) (resp string, err error) {
 	return
 }
 
-func updatePluginChildren(gitURL string) (err error) {
+func updatePluginDependencies(gitURL string) (err error) {
 	args := []string{"get", "-v", "-buildmode=plugin"}
 	update := exec.Command("go", args...)
 	update.Stdin = os.Stdin
