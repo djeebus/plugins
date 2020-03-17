@@ -77,20 +77,29 @@ func (p *Plugin) retrieve() (err error) {
 		return
 	}
 
-	p.out.Notification("About to retrieve")
-	if !doesPluginSourceExist(p.gitURL) {
+	switch {
+	case !doesPluginSourceExist(p.gitURL):
+		p.out.Notification("Plugin source does not yet exist, downloading repository")
 		// We don't have the source yet. Download it
-		return goGet(p.gitURL)
-	}
+		if err = goGet(p.gitURL); err != nil {
+			err = fmt.Errorf("error performing go get: %v", err)
+			return
+		}
 
-	// We have the source already. Perform git pull to make sure the branch is synced
-	if _, err = gitPull(p.gitURL); err != nil {
-		return
-	}
+	default:
+		p.out.Notification("Plugin source exists, pulling most recent version")
+		// We have the source already. Perform git pull to make sure the branch is synced
+		if _, err = gitPull(p.gitURL); err != nil {
+			err = fmt.Errorf("error performing git pull: %v", err)
+			return
+		}
 
-	// Update all the plugin children
-	if err = updatePluginChildren(p.gitURL); err != nil {
-		return
+		p.out.Notification("Updating plugin children")
+		// Update all the plugin children
+		if err = updatePluginChildren(p.gitURL); err != nil {
+			err = fmt.Errorf("error updating plugin children: %v", err)
+			return
+		}
 	}
 
 	p.out.Success("Download complete")
