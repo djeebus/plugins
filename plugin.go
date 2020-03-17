@@ -94,10 +94,10 @@ func (p *Plugin) retrieve() (err error) {
 			return
 		}
 
-		p.out.Notification("Updating plugin children")
-		// Update all the plugin children
-		if err = updatePluginChildren(p.gitURL); err != nil {
-			err = fmt.Errorf("error updating plugin children: %v", err)
+		p.out.Notification("Updating plugin dependencies")
+		// Update all the plugin dependencies
+		if err = updatePluginDependencies(p.gitURL); err != nil {
+			err = fmt.Errorf("error updating plugin dependencies: %v", err)
 			return
 		}
 	}
@@ -129,7 +129,7 @@ func (p *Plugin) checkout() (err error) {
 	p.out.Successf("%s", status)
 
 	// Ensure we have all the current dependencies
-	if err = updatePluginChildren(p.gitURL); err != nil {
+	if err = updatePluginDependencies(p.gitURL); err != nil {
 		return
 	}
 
