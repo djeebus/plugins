@@ -106,7 +106,7 @@ func updatePluginDependencies(gitURL string) (err error) {
 }
 
 func goGet(gitURL string) (err error) {
-	args := []string{"get", "-v", "-buildmode=plugin", gitURL}
+	args := []string{"get", "-v", "-d", "-buildmode=plugin", gitURL}
 	goget := exec.Command("go", args...)
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout
