@@ -89,7 +89,7 @@ func gitPull(gitURL string) (resp string, err error) {
 }
 
 func updatePluginDependencies(gitURL string) (err error) {
-	args := []string{"get", "-v", "-buildmode=plugin"}
+	args := []string{"mod", "download"}
 	update := exec.Command("go", args...)
 	update.Stdin = os.Stdin
 	update.Stdout = os.Stdout
