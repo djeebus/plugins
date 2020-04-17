@@ -130,6 +130,43 @@ func (p *Plugins) BuildAsync(q *queue.Queue) (err error) {
 	return errs.Err()
 }
 
+// Test will test all of the plugins
+func (p *Plugins) Test() (err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, pi := range p.ps {
+		if err = pi.test(); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// TestAsync will test all of the plugins asynchronously
+func (p *Plugins) TestAsync(q *queue.Queue) (err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	var wg sync.WaitGroup
+	wg.Add(len(p.ps))
+
+	var errs errors.ErrorList
+	for _, pi := range p.ps {
+		q.New(func(pi *Plugin) func() {
+			return func() {
+				defer wg.Done()
+				errs.Push(pi.test())
+			}
+		}(pi))
+	}
+
+	wg.Wait()
+
+	return errs.Err()
+}
+
 // Initialize will initialize all loaded plugins
 func (p *Plugins) Initialize() (err error) {
 	p.mu.Lock()

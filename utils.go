@@ -143,6 +143,29 @@ func goBuild(gitURL, filename string) (err error) {
 	return
 }
 
+func goTest(gitURL string) (pass bool, err error) {
+	// Test in local directory with target filepath instead of target directory with build path.
+	goTest := exec.Command("go", "test")
+	// Workaround for https://github.com/golang/go/issues/27751
+	goTest.Dir = getGoDir(gitURL)
+
+	goTest.Stdin = os.Stdin
+	outBuf := bytes.NewBuffer(nil)
+	goTest.Stdout = outBuf
+	goTest.Stderr = os.Stderr
+
+	errBuf := bytes.NewBuffer(nil)
+	goTest.Stderr = errBuf
+
+	if err = goTest.Run(); err != nil {
+		err = errors.Error(errBuf.String())
+		return
+	}
+
+	pass = strings.Contains(outBuf.String(), "PASS")
+	return
+}
+
 func getGoDir(gitURL string) (goDir string) {
 	homeDir := os.Getenv("HOME")
 	return path.Join(homeDir, "go", "src", gitURL)
