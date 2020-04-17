@@ -150,6 +150,26 @@ func (p *Plugin) build() (err error) {
 	return
 }
 
+func (p *Plugin) test() (err error) {
+	if doesPluginExist(p.filename) && !p.update {
+		return
+	}
+
+	var pass bool
+	if pass, err = goTest(p.gitURL); err != nil {
+		p.out.Error("Test failed :(")
+		return
+	}
+
+	if pass {
+		p.out.Success("Test passed!")
+	} else {
+		p.out.Warning("No test files")
+	}
+
+	return
+}
+
 func (p *Plugin) init() (err error) {
 	p.p, err = plugin.Open(p.filename)
 	return
