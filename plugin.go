@@ -158,7 +158,7 @@ func (p *Plugin) test() (err error) {
 	var pass bool
 	if pass, err = goTest(p.gitURL); err != nil {
 		p.out.Error("Test failed :(")
-		return
+		return fmt.Errorf("%s failed test", p.alias)
 	}
 
 	if pass {
