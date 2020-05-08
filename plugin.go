@@ -73,10 +73,6 @@ func (p *Plugin) retrieve() (err error) {
 		return
 	}
 
-	if doesPluginExist(p.filename) && !p.update {
-		return
-	}
-
 	switch {
 	case !doesPluginSourceExist(p.gitURL):
 		p.out.Notification("Plugin source does not yet exist, downloading repository")
@@ -87,15 +83,15 @@ func (p *Plugin) retrieve() (err error) {
 		}
 
 	default:
-		p.out.Notification("Plugin source exists, pulling most recent version")
 		// We have the source already. Perform git pull to make sure the branch is synced
+		p.out.Notification("Pulling most recent version")
 		if _, err = gitPull(p.gitURL); err != nil {
 			err = fmt.Errorf("error performing git pull: %v", err)
 			return
 		}
 
-		p.out.Notification("Updating plugin dependencies")
 		// Update all the plugin dependencies
+		p.out.Notification("Updating plugin dependencies")
 		if err = updatePluginDependencies(p.gitURL); err != nil {
 			err = fmt.Errorf("error updating plugin dependencies: %v", err)
 			return
@@ -116,11 +112,10 @@ func (p *Plugin) checkout() (err error) {
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
 		return
-	} else if len(status) == 0 {
-		return
+	} else if len(status) != 0 {
+		p.out.Successf("Switched to \"%s\" branch", p.branch)
 	}
 
-	p.out.Successf("Switched to \"%s\" branch", p.branch)
 	// Ensure we're up to date with the given branch
 	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
 		return
@@ -138,10 +133,6 @@ func (p *Plugin) checkout() (err error) {
 }
 
 func (p *Plugin) build() (err error) {
-	if doesPluginExist(p.filename) && !p.update {
-		return
-	}
-
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
 	}

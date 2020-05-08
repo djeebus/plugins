@@ -81,11 +81,11 @@ func (p *Plugins) Retrieve() (err error) {
 	defer p.mu.Unlock()
 
 	for _, pi := range p.ps {
-		if err = pi.retrieve(); err != nil {
+		if err = pi.checkout(); err != nil {
 			return
 		}
 
-		if err = pi.checkout(); err != nil {
+		if err = pi.retrieve(); err != nil {
 			return
 		}
 	}
