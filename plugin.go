@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"plugin"
+	"strings"
 
 	"github.com/hatchify/scribe"
 )
@@ -15,13 +16,6 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 	p.update = update
 
 	switch {
-	case filepath.Ext(key) != "":
-		if len(p.alias) == 0 {
-			p.alias = getPluginKey(key)
-		}
-
-		p.filename = key
-
 	case isGitReference(key):
 		var repoName string
 		if _, repoName, p.branch, err = getGitURLParts(key); err != nil {
@@ -39,8 +33,16 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		p.filename = filepath.Join(dir, p.alias+".so")
 
 	default:
-		err = fmt.Errorf("plugin type not supported: %s", key)
-		return
+		if filepath.Ext(key) == "" {
+			err = fmt.Errorf("plugin type not supported: %s", key)
+			return
+		}
+
+		if len(p.alias) == 0 {
+			p.alias = getPluginKey(key)
+		}
+
+		p.filename = key
 	}
 
 	p.out = scribe.New(p.alias)
@@ -68,67 +70,58 @@ type Plugin struct {
 	update bool
 }
 
-func (p *Plugin) retrieve() (err error) {
+func (p *Plugin) updatePlugin() (err error) {
 	if len(p.gitURL) == 0 {
 		return
 	}
 
-	switch {
-	case !doesPluginSourceExist(p.gitURL):
-		p.out.Notification("Plugin source does not yet exist, downloading repository")
-		// We don't have the source yet. Download it
-		if err = goGet(p.gitURL); err != nil {
-			err = fmt.Errorf("error performing go get: %v", err)
-			return
+	if len(p.branch) > 0 {
+		if err = p.checkout(); err != nil {
+			// Check if error was expected: related to pulling a tag successfully
+			if !strings.Contains(err.Error(), "HEAD is now at") {
+				p.out.Errorf("Error checking out %s: %+v", p.branch, err)
+				return
+			}
+
+			return p.updateDependencies()
 		}
-
-	default:
-		// We have the source already. Perform git pull to make sure the branch is synced
-		p.out.Notification("Pulling most recent version")
-		if _, err = gitPull(p.gitURL); err != nil {
-			err = fmt.Errorf("error performing git pull: %v", err)
-			return
-		}
-
-		// Update all the plugin dependencies
-		p.out.Notification("Updating plugin dependencies")
-		if err = updatePluginDependencies(p.gitURL); err != nil {
-			err = fmt.Errorf("error updating plugin dependencies: %v", err)
-			return
-		}
-	}
-
-	p.out.Success("Download complete")
-	return
-}
-
-func (p *Plugin) checkout() (err error) {
-	if len(p.gitURL) == 0 || len(p.branch) == 0 {
-		return
-	}
-
-	p.out.Notification("Checking out " + p.branch)
-	var status string
-	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
-		err = fmt.Errorf("error encountered while switching to \"%s\": %v", p.branch, err)
-		return
-	} else if len(status) != 0 {
-		p.out.Successf("Switched to \"%s\" branch", p.branch)
 	}
 
 	// Ensure we're up to date with the given branch
+	var status string
 	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
-		return
+		if err == nil {
+			p.out.Success("Already up to date!")
+		}
 	}
 
-	p.out.Successf("%s", status)
+	p.out.Notification("Updated plugin source.")
+	return p.updateDependencies()
+}
+
+func (p *Plugin) checkout() (err error) {
+	p.out.Notificationf("Checking out %s...", p.branch)
+
+	var status string
+	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
+		return
+	} else if len(status) != 0 {
+		p.out.Notificationf("Switched to \"%s\" branch", p.branch)
+	}
+
+	return
+}
+
+func (p *Plugin) updateDependencies() (err error) {
+	p.out.Notification("Updating dependencies...")
 
 	// Ensure we have all the current dependencies
 	if err = updatePluginDependencies(p.gitURL); err != nil {
+		p.out.Errorf("Failed to update dependencies %v", err)
 		return
 	}
 
-	p.out.Success("Dependencies downloaded")
+	p.out.Success("Dependencies downloaded!")
 	return
 }
 
@@ -137,7 +130,7 @@ func (p *Plugin) build() (err error) {
 		return
 	}
 
-	p.out.Success("Build complete")
+	p.out.Success("Build complete!")
 	return
 }
 
