@@ -83,6 +83,7 @@ func (p *Plugin) updatePlugin() (err error) {
 				return
 			}
 
+			p.out.Notificationf("Updated to version: %s", p.branch)
 			return p.updateDependencies()
 		}
 	}
@@ -91,22 +92,25 @@ func (p *Plugin) updatePlugin() (err error) {
 	var status string
 	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
 		if err == nil {
-			p.out.Success("Already up to date!")
+			p.out.Notification("Already up to date!")
 		}
+	} else {
+		p.out.Notification("Updated to latest ref.")
 	}
 
-	p.out.Notification("Updated plugin source.")
 	return p.updateDependencies()
 }
 
 func (p *Plugin) checkout() (err error) {
-	p.out.Notificationf("Checking out %s...", p.branch)
+	p.out.Notificationf("Updating %s...", p.branch)
 
 	var status string
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		return
 	} else if len(status) != 0 {
 		p.out.Notificationf("Switched to \"%s\" branch", p.branch)
+	} else {
+		p.out.Notificationf("Already on \"%s\" branch", p.branch)
 	}
 
 	return
