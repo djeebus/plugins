@@ -76,33 +76,49 @@ func (p *Plugin) updatePlugin() (err error) {
 	}
 
 	if len(p.branch) > 0 {
-		if err = p.checkout(); err != nil {
-			// Check if error was expected: related to pulling a tag successfully
-			if !strings.Contains(err.Error(), "HEAD is now at") {
-				p.out.Errorf("Error checking out %s: %+v", p.branch, err)
-				return
-			}
-
-			p.out.Notificationf("Updated to version: %s", p.branch)
-			return p.updateDependencies()
+		var shouldPull bool
+		shouldPull, err = p.setTargetBranch()
+		if !shouldPull || err != nil {
+			// Ignore pull for explicit versions and checkouts with errors
+			return
 		}
 	}
 
 	// Ensure we're up to date with the given branch
 	var status string
-	if status, err = gitPull(p.gitURL); len(status) == 0 || err != nil {
-		if err == nil {
+	if status, err = gitPull(p.gitURL); err == nil {
+		if len(status) == 0 {
 			p.out.Notification("Already up to date!")
+		} else {
+			p.out.Notification("Updated to latest ref.")
 		}
-	} else {
-		p.out.Notification("Updated to latest ref.")
 	}
 
+	// Grab latest deps
+	// TODO: only download changed deps?
 	return p.updateDependencies()
 }
 
+func (p *Plugin) setTargetBranch() (shouldPull bool, err error) {
+	if err = p.checkout(); err != nil {
+		// Err is expected when setting an explicit version
+		if !strings.Contains(err.Error(), "HEAD is now at") {
+			p.out.Errorf("Error checking out %s: %+v", p.branch, err)
+			return
+		}
+
+		p.out.Notificationf("Set version: %s", p.branch)
+
+		// No need to pull
+		return false, p.updateDependencies()
+	}
+
+	// Currently tracking release channel or current branch, needs pull
+	return true, nil
+}
+
 func (p *Plugin) checkout() (err error) {
-	p.out.Notificationf("Updating %s...", p.branch)
+	p.out.Notificationf("Checking out %s...", p.branch)
 
 	var status string
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
