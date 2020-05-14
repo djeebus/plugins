@@ -78,7 +78,10 @@ func (p *Plugin) updatePlugin() (err error) {
 		return
 	}
 
+	p.out.Notification("Updating...")
+
 	if !doesPluginSourceExist(p.gitURL) {
+		p.out.Notification("Source does not exist, fetching...")
 		if err = goGet(p.gitURL); err != nil {
 			return
 		}
@@ -97,7 +100,11 @@ func (p *Plugin) updatePlugin() (err error) {
 	var status string
 	if status, err = gitPull(p.gitURL); err == nil {
 		if len(status) != 0 {
-			p.out.Notification("Updated to latest ref.")
+			if len(p.branch) > 0 {
+				p.out.Notificationf("Pulled latest \"%s\" branch.", p.branch)
+			} else {
+				p.out.Notificationf("Pulled latest commits.")
+			}
 		} else {
 			// Already had these refs
 			p.out.Success("Already up to date.")
@@ -111,13 +118,19 @@ func (p *Plugin) updatePlugin() (err error) {
 }
 
 func (p *Plugin) setTargetBranch() (shouldPull bool, err error) {
-	gitFetch(p.gitURL)
-
 	if err = p.checkout(); err != nil {
 		// Err is expected when setting an explicit version
 		if !strings.Contains(err.Error(), "HEAD is now at") {
-			p.out.Errorf("Error checking out %s: %+v", p.branch, err)
-			return
+			p.out.Notification("Target branch not found, fetching version tags...")
+
+			if err = gitFetchTags(p.gitURL); err != nil {
+				p.out.Errorf("Unable to fetch tags.")
+				return true, err
+			}
+
+			if err = p.checkout(); err == nil || !strings.Contains(err.Error(), "HEAD is now at") {
+				return true, err
+			}
 		}
 
 		p.out.Notificationf("Set version: %s", p.branch)
@@ -135,14 +148,14 @@ func (p *Plugin) checkout() (err error) {
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		return
 	} else if len(status) != 0 {
-		p.out.Notificationf("Switched to \"%s\" branch", p.branch)
+		p.out.Notificationf("Switched to \"%s\" branch.", p.branch)
 	}
 
 	return
 }
 
 func (p *Plugin) updateDependencies() (err error) {
-	p.out.Notification("Updating dependencies...")
+	p.out.Notification("Downloading dependencies...")
 
 	// Ensure we have all the current dependencies
 	if err = updatePluginDependencies(p.gitURL); err != nil {
@@ -150,11 +163,13 @@ func (p *Plugin) updateDependencies() (err error) {
 		return
 	}
 
-	p.out.Success("Dependencies downloaded!")
+	p.out.Success("Dependencies updated!")
 	return
 }
 
 func (p *Plugin) build() (err error) {
+	p.out.Notification("Building...")
+
 	if err = goBuild(p.gitURL, p.filename); err != nil {
 		return
 	}

@@ -27,8 +27,8 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
-func gitFetch(gitURL string) (err error) {
-	gitfetch := exec.Command("git", "fetch", ";", "git", "fetch", "--tags", "--force")
+func gitFetchTags(gitURL string) (err error) {
+	gitfetch := exec.Command("git", "fetch", "--tags", "--force")
 	gitfetch.Dir = getGitDir(gitURL)
 	gitfetch.Stdin = os.Stdin
 
