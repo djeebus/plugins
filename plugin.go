@@ -15,8 +15,8 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 	key, p.alias = parseKey(key)
 	p.update = update
 
-	switch {
-	case isGitReference(key):
+	if isGitReference(key) {
+		// Vpm case?
 		var repoName string
 		if _, repoName, p.branch, err = getGitURLParts(key); err != nil {
 			return
@@ -32,17 +32,20 @@ func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 		// Set filename
 		p.filename = filepath.Join(dir, p.alias+".so")
 
-	default:
-		if filepath.Ext(key) == "" {
+	} else {
+		// Vroomy case?
+		switch filepath.Ext(key) {
+		case ".so":
+			// Handle plugin binary
+			if len(p.alias) == 0 {
+				p.alias = getPluginKey(key)
+			}
+
+			p.filename = key
+		default:
 			err = fmt.Errorf("plugin type not supported: %s", key)
 			return
 		}
-
-		if len(p.alias) == 0 {
-			p.alias = getPluginKey(key)
-		}
-
-		p.filename = key
 	}
 
 	p.out = scribe.New(p.alias)
@@ -75,6 +78,12 @@ func (p *Plugin) updatePlugin() (err error) {
 		return
 	}
 
+	if !doesPluginSourceExist(p.gitURL) {
+		if err = goGet(p.gitURL); err != nil {
+			return
+		}
+	}
+
 	if len(p.branch) > 0 {
 		var shouldPull bool
 		shouldPull, err = p.setTargetBranch()
@@ -87,10 +96,12 @@ func (p *Plugin) updatePlugin() (err error) {
 	// Ensure we're up to date with the given branch
 	var status string
 	if status, err = gitPull(p.gitURL); err == nil {
-		if len(status) == 0 {
-			p.out.Notification("Already up to date!")
-		} else {
+		if len(status) != 0 {
 			p.out.Notification("Updated to latest ref.")
+		} else {
+			// Already had these refs
+			p.out.Success("Already up to date.")
+			return
 		}
 	}
 
@@ -100,6 +111,8 @@ func (p *Plugin) updatePlugin() (err error) {
 }
 
 func (p *Plugin) setTargetBranch() (shouldPull bool, err error) {
+	gitFetch(p.gitURL)
+
 	if err = p.checkout(); err != nil {
 		// Err is expected when setting an explicit version
 		if !strings.Contains(err.Error(), "HEAD is now at") {
@@ -118,15 +131,11 @@ func (p *Plugin) setTargetBranch() (shouldPull bool, err error) {
 }
 
 func (p *Plugin) checkout() (err error) {
-	p.out.Notificationf("Checking out %s...", p.branch)
-
 	var status string
 	if status, err = gitCheckout(p.gitURL, p.branch); err != nil {
 		return
 	} else if len(status) != 0 {
 		p.out.Notificationf("Switched to \"%s\" branch", p.branch)
-	} else {
-		p.out.Notificationf("Already on \"%s\" branch", p.branch)
 	}
 
 	return

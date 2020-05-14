@@ -27,6 +27,24 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
+func gitFetch(gitURL string) (err error) {
+	gitfetch := exec.Command("git", "fetch", ";", "git", "fetch", "--tags", "--force")
+	gitfetch.Dir = getGitDir(gitURL)
+	gitfetch.Stdin = os.Stdin
+
+	outBuf := bytes.NewBuffer(nil)
+	gitfetch.Stdout = outBuf
+
+	errBuf := bytes.NewBuffer(nil)
+	gitfetch.Stderr = errBuf
+
+	if err = gitfetch.Run(); err == nil && errBuf.Len() == 0 {
+		return
+	}
+
+	return
+}
+
 func gitCheckout(gitURL, branch string) (resp string, err error) {
 	gitcheckout := exec.Command("git", "checkout", branch)
 	gitcheckout.Dir = getGitDir(gitURL)
