@@ -27,6 +27,24 @@ func parseKey(key string) (newKey, alias string) {
 	return
 }
 
+func gitFetchTags(gitURL string) (err error) {
+	gitfetch := exec.Command("git", "fetch", "--tags", "--force")
+	gitfetch.Dir = getGitDir(gitURL)
+	gitfetch.Stdin = os.Stdin
+
+	outBuf := bytes.NewBuffer(nil)
+	gitfetch.Stdout = outBuf
+
+	errBuf := bytes.NewBuffer(nil)
+	gitfetch.Stderr = errBuf
+
+	if err = gitfetch.Run(); err == nil && errBuf.Len() == 0 {
+		return
+	}
+
+	return
+}
+
 func gitCheckout(gitURL, branch string) (resp string, err error) {
 	gitcheckout := exec.Command("git", "checkout", branch)
 	gitcheckout.Dir = getGitDir(gitURL)
@@ -226,15 +244,28 @@ func getGitPluginKey(gitURL string) (key, branch string, err error) {
 }
 
 func getGitURLParts(gitURL string) (gitUser, repoName, branch string, err error) {
+	// Attempt to parse version first
+	comps := strings.Split(gitURL, "@")
+
+	// Parse url/branch
 	var u *url.URL
-	if u, err = url.Parse("http://" + gitURL); err != nil {
+	if u, err = url.Parse("http://" + comps[0]); err != nil {
 		return
 	}
 
+	// Split parts
 	parts := stripEmpty(strings.Split(u.Path, "/"))
 	gitUser = parts[0]
 	repoName = parts[1]
-	branch = u.Fragment
+
+	if len(comps) > 1 {
+		// Optional Version
+		branch = comps[1]
+	} else {
+		// Optional Branch
+		branch = u.Fragment
+	}
+
 	return
 }
 
@@ -340,6 +371,7 @@ func isDoesNotExistError(err error) (ok bool) {
 
 func removeBranchHash(gitURL string) (out string) {
 	spl := strings.Split(gitURL, "#")
+	spl = strings.Split(spl[0], "@")
 	out = spl[0]
 	return
 }
