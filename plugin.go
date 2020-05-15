@@ -78,8 +78,6 @@ func (p *Plugin) updatePlugin() (err error) {
 		return
 	}
 
-	p.out.Notification("Updating...")
-
 	if !doesPluginSourceExist(p.gitURL) {
 		p.out.Notification("Source does not exist, fetching...")
 		if err = goGet(p.gitURL); err != nil {
@@ -88,12 +86,16 @@ func (p *Plugin) updatePlugin() (err error) {
 	}
 
 	if len(p.branch) > 0 {
+		p.out.Notificationf("Updating \"%s\" branch...", p.branch)
+
 		var shouldPull bool
 		shouldPull, err = p.setTargetBranch()
 		if !shouldPull || err != nil {
 			// Ignore pull for explicit versions and checkouts with errors
 			return
 		}
+	} else {
+		p.out.Notificationf("Updating %s...", "current branch")
 	}
 
 	// Ensure we're up to date with the given branch
