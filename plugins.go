@@ -48,6 +48,9 @@ type Plugins struct {
 	// Root directory
 	dir string
 
+	// Override config if set
+	Branch string
+
 	// Internal plugin store (by key)
 	ps pluginslice
 
@@ -81,7 +84,7 @@ func (p *Plugins) Retrieve() (err error) {
 	defer p.mu.Unlock()
 
 	for _, pi := range p.ps {
-		if err = pi.updatePlugin(); err != nil {
+		if err = pi.updatePlugin(p.Branch); err != nil {
 			return
 		}
 	}

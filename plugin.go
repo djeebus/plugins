@@ -73,7 +73,7 @@ type Plugin struct {
 	update bool
 }
 
-func (p *Plugin) updatePlugin() (err error) {
+func (p *Plugin) updatePlugin(branch string) (err error) {
 	if len(p.gitURL) == 0 {
 		return
 	}
@@ -83,6 +83,11 @@ func (p *Plugin) updatePlugin() (err error) {
 		if err = goGet(p.gitURL); err != nil {
 			return
 		}
+	}
+
+	// Override branch if set
+	if len(branch) > 0 {
+		p.branch = branch
 	}
 
 	if len(p.branch) > 0 {
