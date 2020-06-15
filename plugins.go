@@ -172,11 +172,10 @@ func (p *Plugins) Initialize() (err error) {
 	defer p.mu.Unlock()
 
 	for _, pi := range p.ps {
+		p.out.Notificationf("Initializing %s (%s)...", pi.alias, pi.filename)
 		if err = pi.init(); err != nil {
 			return
 		}
-
-		p.out.Successf("Initialized %s (%s)", pi.alias, pi.filename)
 	}
 
 	return

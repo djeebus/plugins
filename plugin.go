@@ -12,7 +12,7 @@ import (
 func newPlugin(dir, key string, update bool) (pp *Plugin, err error) {
 	var p Plugin
 	p.importKey = key
-	key, p.alias = parseKey(key)
+	key, p.alias = ParseKey(key)
 	p.update = update
 
 	if isGitReference(key) {

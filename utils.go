@@ -14,7 +14,8 @@ import (
 	"github.com/Hatch1fy/errors"
 )
 
-func parseKey(key string) (newKey, alias string) {
+// ParseKey returns stripped gitUrl and plugin alias
+func ParseKey(key string) (newKey, alias string) {
 	spl := strings.Split(key, " as ")
 	// Set key as the first part of the split
 	newKey = spl[0]
@@ -28,7 +29,6 @@ func parseKey(key string) (newKey, alias string) {
 		alias = strings.Split(alias, "@")[0]
 		alias = strings.Split(alias, "#")[0]
 	}
-
 	return
 }
 
