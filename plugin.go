@@ -81,7 +81,9 @@ func (p *Plugin) updatePlugin(branch string) (err error) {
 	if !doesPluginSourceExist(p.gitURL) {
 		p.out.Notification("Source does not exist, fetching...")
 		if err = goGet(p.gitURL); err != nil {
-			return
+			p.out.Warningf("warning: unable to fetch source: %v", err)
+			// Attempt to continue
+			err = nil
 		}
 	}
 
