@@ -159,8 +159,13 @@ func goBuild(gitURL, filename string) (err error) {
 
 	errBuf := bytes.NewBuffer(nil)
 	gobuild.Stderr = errBuf
+
 	if err = gobuild.Run(); err != nil {
-		return errors.Error(errBuf.String())
+		if errBuf.Len() > 0 {
+			err = errors.Error(errBuf.String())
+		}
+
+		return
 	}
 
 	return
