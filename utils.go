@@ -11,7 +11,7 @@ import (
 	"plugin"
 	"strings"
 
-	"github.com/Hatch1fy/errors"
+	"github.com/hatchify/errors"
 )
 
 // ParseKey returns stripped gitUrl and plugin alias
