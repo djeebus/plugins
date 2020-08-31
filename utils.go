@@ -124,7 +124,7 @@ func updatePluginDependencies(gitURL string) (err error) {
 	update := exec.Command("go", args...)
 	update.Stdin = os.Stdin
 	update.Stdout = os.Stdout
-	update.Dir, err = getGoDir(gitURL)
+	update.Dir, err = getGitDir(gitURL)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func goBuild(gitURL, filename string) (err error) {
 	// Build in local directory with target filepath instead of target directory with build path.
 	gobuild := exec.Command("go", "build", "-trimpath", "-buildmode=plugin", "-o", target)
 	// Workaround for https://github.com/golang/go/issues/27751
-	gobuild.Dir, err = getGoDir(gitURL)
+	gobuild.Dir, err = getGitDir(gitURL)
 	if err != nil {
 		return
 	}
@@ -189,7 +189,7 @@ func goTest(gitURL string) (pass bool, err error) {
 	// Test in local directory with target filepath instead of target directory with build path.
 	goTest := exec.Command("go", "test")
 	// Workaround for https://github.com/golang/go/issues/27751
-	goTest.Dir, err = getGoDir(gitURL)
+	goTest.Dir, err = getGitDir(gitURL)
 	if err != nil {
 		return
 	}
@@ -209,15 +209,6 @@ func goTest(gitURL string) (pass bool, err error) {
 
 	pass = strings.Contains(outBuf.String(), "PASS")
 	return
-}
-
-func getGoDir(gitURL string) (goDir string, err error) {
-	goPath, err := getGoPath()
-	if err != nil {
-		return
-	}
-
-	return path.Join(goPath, "src", gitURL), nil
 }
 
 func getGitDir(gitURL string) (goDir string, err error) {
@@ -410,12 +401,11 @@ func removeBranchHash(gitURL string) (out string) {
 }
 
 func doesPluginSourceExist(gitURL string) (exists bool) {
-	gopath, err := getGoPath()
+	dir, err := getGitDir(gitURL)
 	if err != nil {
 		return
 	}
 
-	dir := path.Join(gopath, "src", gitURL)
 	info, err := os.Stat(dir)
 	if err != nil {
 		return
