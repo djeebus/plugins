@@ -424,6 +424,5 @@ func addToMap(key, val string, uniqueKeys map[string]string) bool {
 	}
 
 	uniqueKeys[key] = val
-
 	return true
 }
