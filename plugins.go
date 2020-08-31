@@ -2,8 +2,10 @@ package plugins
 
 import (
 	"fmt"
+	"path"
 	"plugin"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/hatchify/queue"
@@ -83,13 +85,43 @@ func (p *Plugins) Retrieve() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	var uniqueKeys = make(map[string]string)
 	for _, pi := range p.ps {
+		// Check if we should update this plugin
+		var gitRepo = gitRepoFromURL(pi.gitURL)
+		if !addToMap(gitRepo, "", uniqueKeys) {
+			continue
+		}
+
+		p.out.Notificationf("Updating plugin source: %s", gitRepo)
 		if err = pi.updatePlugin(p.Branch); err != nil {
 			return
 		}
 	}
 
 	return
+}
+
+func gitRepoFromURL(gitURL string) string {
+	var comps = strings.Split(gitURL, "/")
+	if len(comps) > 3 {
+		// Truncate to repo key
+		gitURL = path.Join(comps[0], comps[1], comps[2])
+	}
+
+	return gitURL
+}
+
+// addToMap returns false if key was already in map
+func addToMap(key, val string, uniqueKeys map[string]string) bool {
+	if _, ok := uniqueKeys[key]; ok {
+		// We already have this key, skip
+		return false
+	}
+
+	uniqueKeys[key] = val
+
+	return true
 }
 
 // Build will build all of the plugins
