@@ -83,7 +83,15 @@ func (p *Plugins) Retrieve() (err error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	var uniqueKeys = make(map[string]string)
 	for _, pi := range p.ps {
+		// Check if we should update this plugin
+		var gitRepo = gitRepoFromURL(pi.gitURL)
+		if !addToMap(gitRepo, "", uniqueKeys) {
+			continue
+		}
+
+		p.out.Notificationf("Updating plugin source: %s", gitRepo)
 		if err = pi.updatePlugin(p.Branch); err != nil {
 			return
 		}

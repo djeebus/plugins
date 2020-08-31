@@ -404,3 +404,25 @@ func getGoPath() (gopath string) {
 
 	return build.Default.GOPATH
 }
+
+// gitRepoFromURL will truncate a nested plugin source to the git repo that needs updating (avoid redundant pulls)
+func gitRepoFromURL(gitURL string) string {
+	var comps = strings.Split(gitURL, "/")
+	if len(comps) > 3 {
+		// Truncate to repo key
+		gitURL = path.Join(comps[0], comps[1], comps[2])
+	}
+
+	return gitURL
+}
+
+// addToMap returns false if key was already in map
+func addToMap(key, val string, uniqueKeys map[string]string) bool {
+	if _, ok := uniqueKeys[key]; ok {
+		// We already have this key, skip
+		return false
+	}
+
+	uniqueKeys[key] = val
+	return true
+}
