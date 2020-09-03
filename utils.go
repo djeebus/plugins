@@ -131,6 +131,7 @@ func updatePluginDependencies(gitURL string) (err error) {
 func goGet(gitURL string) (err error) {
 	args := []string{"get", "-v", "-d", "-buildmode=plugin", gitURL}
 	goget := exec.Command("go", args...)
+	goget.Env = append(os.Environ(), "GO111MODULE=off")
 	goget.Stdin = os.Stdin
 	goget.Stdout = os.Stdout
 
@@ -195,6 +196,10 @@ func goTest(gitURL string) (pass bool, err error) {
 }
 
 func getGoDir(gitURL string) (goDir string) {
+	if len(gitURL) >= 1 && gitURL[0] == '.' {
+		return gitURL
+	}
+
 	homeDir := os.Getenv("HOME")
 	return path.Join(homeDir, "go", "src", gitURL)
 }

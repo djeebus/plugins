@@ -91,6 +91,10 @@ func (p *Plugins) Retrieve() (err error) {
 			continue
 		}
 
+		if len(pi.gitURL) >= 1 && pi.gitURL[0] == '.' {
+			continue
+		}
+
 		p.out.Notificationf("Updating plugin source: %s", gitRepo)
 		if err = pi.updatePlugin(p.Branch); err != nil {
 			return
