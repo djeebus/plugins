@@ -91,6 +91,11 @@ func (p *Plugins) Retrieve() (err error) {
 			continue
 		}
 
+		// Skip fetch on local plugins
+		if isLocal(pi.gitURL) {
+			continue
+		}
+
 		p.out.Notificationf("Updating plugin source: %s", gitRepo)
 		if err = pi.updatePlugin(p.Branch); err != nil {
 			return
