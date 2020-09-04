@@ -91,7 +91,7 @@ func (p *Plugins) Retrieve() (err error) {
 			continue
 		}
 
-		if len(pi.gitURL) >= 1 && pi.gitURL[0] == '.' {
+		if isLocal(pi.gitURL) {
 			continue
 		}
 

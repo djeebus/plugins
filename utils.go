@@ -196,7 +196,7 @@ func goTest(gitURL string) (pass bool, err error) {
 }
 
 func getGoDir(gitURL string) (goDir string) {
-	if len(gitURL) >= 1 && gitURL[0] == '.' {
+	if isLocal(gitURL) {
 		return gitURL
 	}
 
@@ -430,4 +430,8 @@ func addToMap(key, val string, uniqueKeys map[string]string) bool {
 
 	uniqueKeys[key] = val
 	return true
+}
+
+func isLocal(path string) bool {
+	return strings.HasPrefix(path, "./")
 }
