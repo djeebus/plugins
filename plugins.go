@@ -91,6 +91,7 @@ func (p *Plugins) Retrieve() (err error) {
 			continue
 		}
 
+		// Skip fetch on local plugins
 		if isLocal(pi.gitURL) {
 			continue
 		}
