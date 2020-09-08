@@ -14,6 +14,8 @@ import (
 	"github.com/hatchify/errors"
 )
 
+var cachedGoPath = ""
+
 // ParseKey returns stripped gitUrl and plugin alias
 func ParseKey(key string) (newKey, alias string) {
 	spl := strings.Split(key, " as ")
@@ -423,19 +425,22 @@ func doesPluginSourceExist(gitURL string) (exists bool) {
 	return info.IsDir()
 }
 
-var goPath = ""
+func getGoPath() (goPath string, err error) {
+	goPath = cachedGoPath
 
-func getGoPath() (string, error) {
-	if goPath == "" {
+	if len(goPath) == 0 {
 		goEnvCmd := exec.Command("go", "env", "GOPATH")
 		output, err := goEnvCmd.CombinedOutput()
 		if err != nil {
-			return "", err
+			err = fmt.Errorf("failed to read GOPATH: %v", err)
+			return
 		}
 
-		goPath = strings.TrimSpace(string(output))
+		cachedGoPath = strings.TrimSpace(string(output))
+		goPath = cachedGoPath
 	}
-	return goPath, nil
+
+	return
 }
 
 // gitRepoFromURL will truncate a nested plugin source to the git repo that needs updating (avoid redundant pulls)
