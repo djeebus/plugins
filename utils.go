@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
@@ -33,10 +34,11 @@ func ParseKey(key string) (newKey, alias string) {
 
 func gitFetchTags(gitURL string) (err error) {
 	gitfetch := exec.Command("git", "fetch", "--tags", "--force")
-	gitfetch.Dir, err = getGitDir(gitURL)
-	if err != nil {
+	if gitfetch.Dir, err = getGitDir(gitURL); err != nil {
+		err = fmt.Errorf("error getting git directory for URL \"%s\": %v", gitURL, err)
 		return
 	}
+
 	gitfetch.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
@@ -54,10 +56,11 @@ func gitFetchTags(gitURL string) (err error) {
 
 func gitCheckout(gitURL, branch string) (resp string, err error) {
 	gitcheckout := exec.Command("git", "checkout", branch)
-	gitcheckout.Dir, err = getGitDir(gitURL)
-	if err != nil {
+	if gitcheckout.Dir, err = getGitDir(gitURL); err != nil {
+		err = fmt.Errorf("error getting git directory for URL \"%s\": %v", gitURL, err)
 		return
 	}
+
 	gitcheckout.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
@@ -90,10 +93,11 @@ func gitCheckout(gitURL, branch string) (resp string, err error) {
 
 func gitPull(gitURL string) (resp string, err error) {
 	gitpull := exec.Command("git", "pull", "origin")
-	gitpull.Dir, err = getGitDir(gitURL)
-	if err != nil {
+	if gitpull.Dir, err = getGitDir(gitURL); err != nil {
+		err = fmt.Errorf("error getting git directory for URL \"%s\": %v", gitURL, err)
 		return
 	}
+
 	gitpull.Stdin = os.Stdin
 
 	outBuf := bytes.NewBuffer(nil)
@@ -124,9 +128,9 @@ func updatePluginDependencies(gitURL string) (err error) {
 	update := exec.Command("go", args...)
 	update.Stdin = os.Stdin
 	update.Stdout = os.Stdout
-	update.Dir, err = getGitDir(gitURL)
-	if err != nil {
-		return err
+	if update.Dir, err = getGitDir(gitURL); err != nil {
+		err = fmt.Errorf("error getting git directory for URL \"%s\": %v", gitURL, err)
+		return
 	}
 
 	errBuf := bytes.NewBuffer(nil)
